@@ -155,6 +155,9 @@ public class RegexInterpreter extends Interpreter {
 
       recordSchemaBuilder.addNull("recordType");
 
+      recordSchemaBuilder.add("regex", pattern.toString());
+
+
       final JsonArrayBuilder recordSchemeDataBuilder = Json.createArrayBuilder();
 
       for (String key : groupMap.keySet()) {

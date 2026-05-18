@@ -91,6 +91,7 @@ public class RegexInterpreterTest {
     StringBuilder expectedBuilder = new StringBuilder()
             .append("{\n")
             .append("    \"recordType\": null,\n")
+            .append("    \"regex\": \"^(?<line>.*)$\",\n")
             .append("    \"columns\": [\n")
             .append("        {\n")
             .append("            \"line\": \"my-content-to-test-with\",\n")
@@ -113,6 +114,35 @@ public class RegexInterpreterTest {
 
     assertEquals(InterpreterResult.Code.ERROR, res.code());
     assertEquals("unrecognized prompt, please use regex on the first line and content on subsequent line(s)", res.message().get(0).getData());
+
+  }
+
+  @Test
+  public void testNomatch() {
+
+    StringWriter writer = new StringWriter();
+    PrintWriter out = new PrintWriter(writer);
+    out.println(); // first line is after %regex\s so it is skipped
+    out.println("^(?<number>\\d+)$");
+    out.print("not-numbers");
+    out.close();
+
+    StringBuilder expectedBuilder = new StringBuilder()
+            .append("Provided regex\n")
+            .append("----\n")
+            .append("^(?<number>\\d+)$\n")
+            .append("----\n")
+            .append("Does not match provided content\n")
+            .append("----\n")
+            .append("not-numbers\n")
+            .append("----");
+
+    String expected = expectedBuilder.toString();
+
+    InterpreterResult res = regexInterpreter.interpret(writer.toString(), context);
+
+    assertEquals(InterpreterResult.Code.ERROR, res.code());
+    assertEquals(expected, res.message().get(0).getData());
 
   }
 
