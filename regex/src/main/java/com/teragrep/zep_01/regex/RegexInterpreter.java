@@ -46,21 +46,13 @@
 
 package com.teragrep.zep_01.regex;
 
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import java.util.stream.Stream;
 
 import com.teragrep.zep_01.interpreter.Interpreter;
 import com.teragrep.zep_01.interpreter.InterpreterContext;
 import com.teragrep.zep_01.interpreter.InterpreterResult;
 import com.teragrep.zep_01.interpreter.thrift.InterpreterCompletion;
-import jakarta.json.*;
-import jakarta.json.stream.JsonGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,105 +81,26 @@ public class RegexInterpreter extends Interpreter {
   @Override
   public InterpreterResult interpret(String prompt, InterpreterContext context) {
     try {
-      LOGGER.trace("Interpreting prompt <[{}]>", prompt);
+      SkipablePrompt skipablePrompt = new SkipablePrompt(prompt);
+      SpliatblePrompt spliatblePrompt = new SpliatblePrompt(skipablePrompt.skipFirstLine());
 
-      int newlineIndex = prompt.indexOf('\n');
+      String regex = spliatblePrompt.regex();
 
-      if (newlineIndex == -1) {
-        throw new RegexInterpreterException("unrecognized prompt, please newline after interpreter declaration and use regex on the first line and content on subsequent line(s)");
-      }
-      String omitted = prompt.substring(0, newlineIndex);
-      LOGGER.trace("omitting <[{}]>",  omitted);
+      RegexString regexString = new RegexString(regex);
+      Pattern pattern = regexString.asPattern();
 
-      String cleanPrompt = prompt.substring(newlineIndex + 1);
+      NamedGroupsPattern namedGroupsPattern = new NamedGroupsPattern(pattern);
 
-      int cleanPromptNewlineIndex = cleanPrompt.indexOf('\n');
+      String content = spliatblePrompt.content();
+      MatchableContent matchableContent = new MatchableContent(namedGroupsPattern, content);
+      List<Map<String, String>> captureGroups = matchableContent.captureGroups();
 
-      if (cleanPromptNewlineIndex == -1) {
-        throw new RegexInterpreterException("unrecognized prompt, please use regex on the first line and content on subsequent line(s)");
-      }
+      JsonOutput2 jsonOutput2 = new JsonOutput2(pattern, captureGroups);
+      PrettyJsonStringImpl prettyJsonStringImpl = new PrettyJsonStringImpl();
 
-      String regex = cleanPrompt.substring(0, cleanPromptNewlineIndex);
-      LOGGER.trace("Extracted regex <[{}]>", regex);
-      String content = cleanPrompt.substring(cleanPromptNewlineIndex + 1);
-      LOGGER.trace("Extracted content <[{}]>", content);
+      String output = prettyJsonStringImpl.pretty(jsonOutput2.asJson());
 
-      final Pattern pattern;
-      try {
-        pattern = Pattern.compile(regex);
-      }
-      catch (PatternSyntaxException e) {
-        LOGGER.error("regex compilation failed", e);
-        throw new RegexInterpreterException("regex compilation failed", e);
-      }
-
-      Matcher matcher = pattern.matcher(content);
-
-      final Method namedGroupsMethod;
-      try {
-        // java 11 does not have namedGroups as public so reflection is needed
-        namedGroupsMethod = Pattern.class.getDeclaredMethod("namedGroups");
-      }
-      catch (NoSuchMethodException e) {
-        LOGGER.error("reflection error getDeclaredMethod", e);
-        throw new RegexInterpreterException("reflection error getDeclaredMethod", e);
-      }
-
-      namedGroupsMethod.setAccessible(true);
-
-      final Map<String, Integer> groupMap;
-      try {
-        @SuppressWarnings("unchecked")
-        final Map<String, Integer> groupMapLocal = (Map<String, Integer>) namedGroupsMethod.invoke(pattern);
-        groupMap = groupMapLocal;
-      }
-      catch (InvocationTargetException | IllegalAccessException e) {
-        LOGGER.error("reflection error invoke", e);
-        throw new RegexInterpreterException("reflection error invoke", e);
-      }
-
-      if (!matcher.matches()) {
-        LOGGER.warn("regex does not match content");
-        throw new RegexInterpreterException("Provided regex\n----\n" + regex + "\n----\nDoes not match provided content\n----\n" + content + "\n----");
-      }
-
-      final JsonObjectBuilder recordSchemaBuilder = Json.createObjectBuilder();
-
-      recordSchemaBuilder.addNull("recordType");
-
-      recordSchemaBuilder.add("regex", pattern.toString());
-
-
-      final JsonArrayBuilder recordSchemeDataBuilder = Json.createArrayBuilder();
-
-      for (String key : groupMap.keySet()) {
-        final JsonObjectBuilder recordSchemaDatumBuilder = Json.createObjectBuilder();
-        final String value = matcher.group(key);
-
-        if (value == null) {
-          recordSchemaDatumBuilder.addNull(key);
-        }
-        else {
-          recordSchemaDatumBuilder.add(key, value);
-        }
-        recordSchemaDatumBuilder.addNull("columnDescription");
-        recordSchemeDataBuilder.add(recordSchemaDatumBuilder.build());
-      }
-
-      recordSchemaBuilder.add("columns", recordSchemeDataBuilder.build());
-
-      final JsonObject jsonObject = recordSchemaBuilder.build();
-
-      final Map<String, Boolean> config = Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true);
-
-      final JsonWriterFactory writerFactory = Json.createWriterFactory(config);
-
-      final StringWriter stringWriter = new StringWriter();
-      try (JsonWriter jsonWriter = writerFactory.createWriter(stringWriter)) {
-        jsonWriter.writeObject(jsonObject);
-      }
-
-      return new InterpreterResult(InterpreterResult.Code.SUCCESS, stringWriter.toString());
+      return new InterpreterResult(InterpreterResult.Code.SUCCESS, output);
     }
     catch (RegexInterpreterException rie) {
       return new InterpreterResult(InterpreterResult.Code.ERROR, rie.getMessage());
