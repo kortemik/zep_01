@@ -43,36 +43,18 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.zep_01.regex;
+package com.teragrep.zep_01.regex.captureGroup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class TextStub implements Text {
 
-public class SkipablePrompt {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkipablePrompt.class);
-
-    private final String prompt;
-    private final int newlineIndex;
-
-    public SkipablePrompt(String prompt) {
-        this(prompt, prompt.indexOf('\n'));
+    @Override
+    public boolean isStub() {
+        return true;
     }
 
-    public SkipablePrompt(String prompt, int newLineIndex) {
-        this.prompt = prompt;
-        this.newlineIndex = newLineIndex;
+    @Override
+    public String toString() {
+        throw new UnsupportedOperationException("NameStub does not implement toString");
     }
 
-    public String skipFirstLine() throws RegexInterpreterException {
-        LOGGER.trace("Interpreting prompt <[{}]>", prompt);
-
-        if (newlineIndex == -1) {
-            throw new RegexInterpreterException("unrecognized prompt, please newline after interpreter declaration and use regex on the first line and content on subsequent line(s)");
-        }
-        String omitted = prompt.substring(0, newlineIndex);
-        LOGGER.trace("omitting <[{}]>",  omitted);
-
-        return prompt.substring(newlineIndex + 1);
-    }
 }

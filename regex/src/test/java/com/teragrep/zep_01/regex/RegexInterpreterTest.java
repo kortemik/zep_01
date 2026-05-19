@@ -94,8 +94,10 @@ public class RegexInterpreterTest {
             .append("    \"regex\": \"^(?<line>.*)$\",\n")
             .append("    \"columns\": [\n")
             .append("        {\n")
-            .append("            \"line\": \"my-content-to-test-with\",\n")
-            .append("            \"columnDescription\": null\n")
+            .append("            \"description\": null,\n")
+            .append("            \"id\": 1,\n")
+            .append("            \"name\": \"line\",\n")
+            .append("            \"value\": \"my-content-to-test-with\"\n")
             .append("        }\n")
             .append("    ]\n")
             .append("}");

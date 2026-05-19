@@ -45,34 +45,54 @@
  */
 package com.teragrep.zep_01.regex;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.teragrep.zep_01.regex.captureGroup.Jsonable;
+import jakarta.json.*;
+import jakarta.json.stream.JsonGenerator;
 
-public class SkipablePrompt {
+import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkipablePrompt.class);
+public class Output implements Jsonable {
+    private static final JsonWriterFactory writerFactory = Json.createWriterFactory(
+            Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
 
-    private final String prompt;
-    private final int newlineIndex;
+    private final String regex;
+    private final List<Jsonable> jsonableGroups;
 
-    public SkipablePrompt(String prompt) {
-        this(prompt, prompt.indexOf('\n'));
+    public Output(final String regex, List<Jsonable> jsonableGroups) {
+        this.regex = regex;
+        this.jsonableGroups = jsonableGroups;
     }
 
-    public SkipablePrompt(String prompt, int newLineIndex) {
-        this.prompt = prompt;
-        this.newlineIndex = newLineIndex;
-    }
+    @Override
+    public JsonObject toJson() {
+        final JsonObjectBuilder recordSchemaBuilder = Json.createObjectBuilder();
 
-    public String skipFirstLine() throws RegexInterpreterException {
-        LOGGER.trace("Interpreting prompt <[{}]>", prompt);
+        recordSchemaBuilder.addNull("recordType");
 
-        if (newlineIndex == -1) {
-            throw new RegexInterpreterException("unrecognized prompt, please newline after interpreter declaration and use regex on the first line and content on subsequent line(s)");
+        recordSchemaBuilder.add("regex", regex);
+
+        final JsonArrayBuilder recordSchemeDataBuilder = Json.createArrayBuilder();
+
+        // produce describable key value where describer is a decoration that can auto-analyze?
+        for (Jsonable jsonable : jsonableGroups) {
+            recordSchemeDataBuilder.add(jsonable.toJson());
         }
-        String omitted = prompt.substring(0, newlineIndex);
-        LOGGER.trace("omitting <[{}]>",  omitted);
 
-        return prompt.substring(newlineIndex + 1);
+        recordSchemaBuilder.add("columns", recordSchemeDataBuilder.build());
+
+        return recordSchemaBuilder.build();
     }
+
+    @Override
+    public String toString() {
+        final StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = writerFactory.createWriter(stringWriter)) {
+            jsonWriter.writeObject(toJson());
+        }
+        return stringWriter.toString();
+
+    }
+
 }

@@ -53,15 +53,12 @@ import com.teragrep.zep_01.interpreter.Interpreter;
 import com.teragrep.zep_01.interpreter.InterpreterContext;
 import com.teragrep.zep_01.interpreter.InterpreterResult;
 import com.teragrep.zep_01.interpreter.thrift.InterpreterCompletion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.teragrep.zep_01.regex.captureGroup.*;
 
 /**
  * Java interpreter
  */
 public class RegexInterpreter extends Interpreter {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(RegexInterpreter.class);
 
   public RegexInterpreter(Properties property) {
     super(property);
@@ -93,14 +90,23 @@ public class RegexInterpreter extends Interpreter {
 
       String content = spliatblePrompt.content();
       MatchableContent matchableContent = new MatchableContent(namedGroupsPattern, content);
-      List<Map<String, String>> captureGroups = matchableContent.captureGroups();
 
-      JsonOutput2 jsonOutput2 = new JsonOutput2(pattern, captureGroups);
-      PrettyJsonStringImpl prettyJsonStringImpl = new PrettyJsonStringImpl();
+      List<Group> groups = matchableContent.captureGroups();
 
-      String output = prettyJsonStringImpl.pretty(jsonOutput2.asJson());
 
-      return new InterpreterResult(InterpreterResult.Code.SUCCESS, output);
+      final List<Jsonable>  jsonableGroups = new ArrayList<>();
+      for (Group group : groups) {
+        if (group.name().isStub()) {
+          jsonableGroups.add(new GroupJsonableImpl(group));
+        }
+        else {
+          jsonableGroups.add(new DescribedGroupJsonable(new DescribedGroupImpl(group)));
+        }
+      }
+
+      Output output = new Output(regex, jsonableGroups);
+
+      return new InterpreterResult(InterpreterResult.Code.SUCCESS, output.toString());
     }
     catch (RegexInterpreterException rie) {
       return new InterpreterResult(InterpreterResult.Code.ERROR, rie.getMessage());

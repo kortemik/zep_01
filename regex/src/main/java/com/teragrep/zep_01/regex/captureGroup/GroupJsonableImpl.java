@@ -43,36 +43,69 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.zep_01.regex;
+package com.teragrep.zep_01.regex.captureGroup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonWriter;
 
-public class SkipablePrompt {
+import java.io.StringWriter;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkipablePrompt.class);
+public class GroupJsonableImpl implements GroupJsonable {
 
-    private final String prompt;
-    private final int newlineIndex;
 
-    public SkipablePrompt(String prompt) {
-        this(prompt, prompt.indexOf('\n'));
+    private final Group group;
+
+    public GroupJsonableImpl(final Group group) {
+        this.group = group;
     }
 
-    public SkipablePrompt(String prompt, int newLineIndex) {
-        this.prompt = prompt;
-        this.newlineIndex = newLineIndex;
+    @Override
+    public int id() {
+        return group.id();
     }
 
-    public String skipFirstLine() throws RegexInterpreterException {
-        LOGGER.trace("Interpreting prompt <[{}]>", prompt);
+    @Override
+    public Text name() {
+        return group.name();
+    }
 
-        if (newlineIndex == -1) {
-            throw new RegexInterpreterException("unrecognized prompt, please newline after interpreter declaration and use regex on the first line and content on subsequent line(s)");
+    @Override
+    public Text value() {
+        return group.name();
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+
+        builder.add("id", id());
+
+        if (name().isStub()) {
+            builder.addNull("name");
         }
-        String omitted = prompt.substring(0, newlineIndex);
-        LOGGER.trace("omitting <[{}]>",  omitted);
+        else {
+            builder.add("name", name().toString());
+        }
 
-        return prompt.substring(newlineIndex + 1);
+        if (value().isStub()) {
+            builder.addNull("value");
+        }
+        else {
+            builder.add("value", value().toString());
+        }
+
+        return builder.build();
     }
+
+    @Override
+    public String toString() {
+        final StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = Json.createWriter(stringWriter)) {
+            jsonWriter.writeObject(toJson());
+        }
+        return stringWriter.toString();
+    }
+
 }

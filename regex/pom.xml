@@ -66,6 +66,14 @@ a licensee so wish it.
     <!--library versions-->
     <interpreter.name>regex</interpreter.name>
   </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.teragrep</groupId>
+            <artifactId>stb_01</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
   
   <build>
     <plugins>

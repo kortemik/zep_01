@@ -43,36 +43,54 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.zep_01.regex;
+package com.teragrep.zep_01.regex.captureGroup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class SkipablePrompt {
+public class GroupImpl implements Group {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkipablePrompt.class);
+    private final int id;
+    private final Text name;
+    private final Text value;
 
-    private final String prompt;
-    private final int newlineIndex;
-
-    public SkipablePrompt(String prompt) {
-        this(prompt, prompt.indexOf('\n'));
+    public GroupImpl(int id, Text name, Text value) {
+        this.id = id;
+        this.name = name;
+        this.value = value;
     }
 
-    public SkipablePrompt(String prompt, int newLineIndex) {
-        this.prompt = prompt;
-        this.newlineIndex = newLineIndex;
+    @Override
+    public int id() {
+        return id;
     }
 
-    public String skipFirstLine() throws RegexInterpreterException {
-        LOGGER.trace("Interpreting prompt <[{}]>", prompt);
+    @Override
+    public Text name() {
+        return name;
+    }
 
-        if (newlineIndex == -1) {
-            throw new RegexInterpreterException("unrecognized prompt, please newline after interpreter declaration and use regex on the first line and content on subsequent line(s)");
+    @Override
+    public Text value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        final String nameString;
+        if (name.isStub()) {
+            nameString = "<>";
         }
-        String omitted = prompt.substring(0, newlineIndex);
-        LOGGER.trace("omitting <[{}]>",  omitted);
+        else {
+            nameString = "<["+ name + "]>" ;
+        }
 
-        return prompt.substring(newlineIndex + 1);
+        final String valueString;
+        if (value.isStub()) {
+            valueString = "<>";
+        }
+        else {
+            valueString = "<["+ value + "]>" ;
+        }
+
+        return "id <" + id + "> name " + nameString + " value " + valueString;
     }
 }
