@@ -78,17 +78,17 @@ public class RegexInterpreter extends Interpreter {
   @Override
   public InterpreterResult interpret(String prompt, InterpreterContext context) {
     try {
-      SkipablePrompt skipablePrompt = new SkipablePrompt(prompt);
-      SpliatblePrompt spliatblePrompt = new SpliatblePrompt(skipablePrompt.skipFirstLine());
+      SkippablePrompt skippablePrompt = new SkippablePrompt(prompt);
+      SplitablePrompt splitablePrompt = new SplitablePrompt(skippablePrompt.skipFirstLine());
 
-      String regex = spliatblePrompt.regex();
+      String regex = splitablePrompt.regex();
 
       RegexString regexString = new RegexString(regex);
       Pattern pattern = regexString.asPattern();
 
       NamedGroupsPattern namedGroupsPattern = new NamedGroupsPattern(pattern);
 
-      String content = spliatblePrompt.content();
+      String content = splitablePrompt.content();
       MatchableContent matchableContent = new MatchableContent(namedGroupsPattern, content);
 
       List<Group> groups = matchableContent.captureGroups();

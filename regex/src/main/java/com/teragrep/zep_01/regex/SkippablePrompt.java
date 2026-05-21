@@ -48,18 +48,18 @@ package com.teragrep.zep_01.regex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SkipablePrompt {
+public class SkippablePrompt {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkipablePrompt.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SkippablePrompt.class);
 
     private final String prompt;
     private final int newlineIndex;
 
-    public SkipablePrompt(String prompt) {
+    public SkippablePrompt(String prompt) {
         this(prompt, prompt.indexOf('\n'));
     }
 
-    public SkipablePrompt(String prompt, int newLineIndex) {
+    public SkippablePrompt(String prompt, int newLineIndex) {
         this.prompt = prompt;
         this.newlineIndex = newLineIndex;
     }

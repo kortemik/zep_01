@@ -48,18 +48,18 @@ package com.teragrep.zep_01.regex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SpliatblePrompt {
+public class SplitablePrompt {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SpliatblePrompt.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SplitablePrompt.class);
 
     private final String prompt;
     private final int newLineIndex;
 
-    public SpliatblePrompt(String prompt) {
+    public SplitablePrompt(String prompt) {
         this(prompt, prompt.indexOf('\n'));
     }
 
-    public SpliatblePrompt(String prompt, int newlineIndex) {
+    public SplitablePrompt(String prompt, int newlineIndex) {
         this.prompt = prompt;
         this.newLineIndex = newlineIndex;
     }
